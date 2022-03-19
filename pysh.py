@@ -1,4 +1,5 @@
 import importlib.util
+import locale
 import os
 import re
 import subprocess
@@ -6,12 +7,11 @@ import sys
 import types
 import typing as T
 from pathlib import Path as P
+
 import typer
-import locale
 
 __version__ = "0.2.0"
 __all__ = ["P", "sh", "PIPE", "re", "typer", "sys", "os"]
-
 
 
 PIPE = subprocess.PIPE
@@ -41,8 +41,10 @@ def import_from_path(
         # A cute little trick to preprocess code before running it
         if preprocess is not None:
             original_source_to_code = spec.loader.source_to_code
+
             def source_to_code(data: bytes, path, *, _optimize=-1):
                 return original_source_to_code(preprocess(data), path, _optimize=_optimize)
+
             spec.loader.source_to_code = source_to_code
             original_dont_write_bytecode = sys.dont_write_bytecode
             sys.dont_write_bytecode = True
@@ -60,7 +62,10 @@ def import_from_path(
 
         exc = traceback.format_exc()
         if "_call_with_frames_removed\n" in exc:
-            exc = "Traceback (most recent call last):\n" + exc[exc.find("_call_with_frames_removed\n") + len("_call_with_frames_removed\n") :]
+            exc = (
+                "Traceback (most recent call last):\n"
+                + exc[exc.find("_call_with_frames_removed\n") + len("_call_with_frames_removed\n") :]
+            )
         sys.stderr.write(exc)
         raise
 
@@ -74,17 +79,17 @@ def convert_to_shell_cmd(line: str) -> str:
         if varname.isdigit():
             line = line.replace(var, f"{{sys.argv[{varname}]}}")
         else:
-            line = line.replace(var, f"{{os.environ['{varname}']}}") 
+            line = line.replace(var, f"{{os.environ['{varname}']}}")
     return line
 
 
 def preprocess(text: bytes) -> bytes:
     encoding = locale.getpreferredencoding()
     plaintext = text.decode(encoding)
-    plaintext = "\n".join([convert_to_shell_cmd(l) if l.lstrip().startswith("!") else l for l in plaintext.splitlines()])
+    plaintext = "\n".join(
+        [convert_to_shell_cmd(l) if l.lstrip().startswith("!") else l for l in plaintext.splitlines()]
+    )
     return plaintext.encode(encoding)
-        
-
 
 
 def main(argv: T.Optional[T.List[str]] = None) -> None:
@@ -99,7 +104,6 @@ def main(argv: T.Optional[T.List[str]] = None) -> None:
         print("Expecting a path to the script", file=sys.stderr)
         exit(1)
     import builtins
-
 
     argv[0] = argv.pop(1)
 

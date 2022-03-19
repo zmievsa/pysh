@@ -7,12 +7,17 @@ import types
 import typing as T
 from pathlib import Path as P
 import typer
+import locale
 
 __version__ = "0.2.0"
 __all__ = ["P", "sh", "PIPE", "re", "typer", "sys", "os"]
 
 
+
 PIPE = subprocess.PIPE
+DEVNULL = subprocess.DEVNULL
+
+RE_SHELLVAR = re.compile(r"\$\w+")
 
 
 def sh(cmd: T.Union[str, T.List[str]], extra_env: T.Dict[str, str] = {}, **kwargs):
@@ -62,6 +67,25 @@ def import_from_path(
     return module
 
 
+def convert_to_shell_cmd(line: str) -> str:
+    line = f'sh(f"""{line[1:]}""")'
+    for var in set(RE_SHELLVAR.findall(line)):
+        varname = var[1:]
+        if varname.isdigit():
+            line = line.replace(var, f"{{sys.argv[{varname}]}}")
+        else:
+            line = line.replace(var, f"{{os.environ['{varname}']}}") 
+    return line
+
+
+def preprocess(text: bytes) -> bytes:
+    encoding = locale.getpreferredencoding()
+    plaintext = text.decode(encoding)
+    plaintext = "\n".join([convert_to_shell_cmd(l) if l.lstrip().startswith("!") else l for l in plaintext.splitlines()])
+    return plaintext.encode(encoding)
+        
+
+
 
 def main(argv: T.Optional[T.List[str]] = None) -> None:
     if argv is None:
@@ -86,7 +110,7 @@ def main(argv: T.Optional[T.List[str]] = None) -> None:
         setattr(builtins, f"a{index}", arg)
 
     try:
-        import_from_path(argv[0], P(argv[0]))
+        import_from_path(argv[0], P(argv[0]), preprocess=preprocess)
     except:
         exit(1)
 

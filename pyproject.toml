@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "pysh"
+version = "0.1.0"
+description = "A bunch of shortcuts to simplify scripting in python"
+authors = ["Stanislav Zmiev <szmiev2000@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+typer = {extras = ["all"], version = "^0.4.0"}
+tomlkit = "^0.10.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.1.0"
+isort = "^5.10.1"
+
+[tool.poetry.scripts]
+pysh = 'pysh:main'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

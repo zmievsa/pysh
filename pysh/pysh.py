@@ -21,8 +21,6 @@ __all__ = ["P", "sh", "PIPE", "re", "typer", "sys", "os"]
 PIPE = subprocess.PIPE
 DEVNULL = subprocess.DEVNULL
 
-RE_SHELLVAR = re.compile(r"\$[\w@#]+")
-
 
 def sh(
     cmd: T.Union[str, T.List[str]],

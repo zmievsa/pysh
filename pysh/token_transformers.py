@@ -32,46 +32,44 @@ def convert_to_magical_command(tokens: List[str]) -> str:
 def modify_tokens(tokens: List[tokenize.TokenInfo]) -> Generator[Union[tokenize.TokenInfo, Token], None, None]:
     bash_line_started = False
     piped_bash_line_started = False
-    skip_next_token = False
+    convert_next_token_to_shell_cmd = False
 
     cmd_tokens = deque()
-    for first, second in zip(tokens, tokens[1:]):
-        if skip_next_token and second.type != tokenize.NEWLINE:
-            # print("SKIP", first)
-            skip_next_token = False
-        elif first.string == "!":
-            # print("START", first)
+    for token in tokens:
+        if convert_next_token_to_shell_cmd:
+            cmd_tokens.append(convert_to_shell_var(token.string))
+            convert_next_token_to_shell_cmd = False
+        elif token.string == "!":
+            # print("START", token)
             if piped_bash_line_started:
-                raise SyntaxError(f'Three "!" in one line are not supported. Problematic line: {first.line}')
+                raise SyntaxError(f'Three "!" in one line are not supported. Problematic line: {token.line}')
             elif bash_line_started:
                 piped_bash_line_started = True
             else:
                 bash_line_started = True
-        elif second.type == tokenize.NEWLINE and bash_line_started:
-            # print("END", first)
-            if not skip_next_token:
-                cmd_tokens.append(first.string)
+        elif token.type == tokenize.NEWLINE and bash_line_started:
             if cmd_tokens[0] in MAGICAL_COMMANDS:
                 yield Token(tokenize.NAME, convert_to_magical_command(list(cmd_tokens)))
             else:
                 cmd = " ".join(cmd_tokens).replace('"', '\\"')
                 yield Token(tokenize.NAME, f'''sh(f"""{cmd}""", pipe_stdout={piped_bash_line_started}).stdout''')
             cmd_tokens.clear()
-            bash_line_started = piped_bash_line_started = skip_next_token = False
+            bash_line_started = piped_bash_line_started = False
+            yield token
         elif bash_line_started:
-            # print("ADD", first)
-            if first.string == "$":
-                cmd_tokens.append(convert_to_shell_var(second.string))
-                skip_next_token = True
+            # print("ADD", token)
+            if token.string == "$":
+                convert_next_token_to_shell_cmd = True
             else:
-                cmd_tokens.append(first.string)
+                cmd_tokens.append(token.string)
         else:
-            # print("STANDARD", first)
-            yield first
+            # print("STANDARD", token)
+            yield token
     yield tokens[-1]
 
 
 def transform_source(source, **kwargs):
     tokens = list(tokenize.generate_tokens(StringIO(source).readline))
     source = tokenize.untokenize(modify_tokens(tokens))
+    # print(source)
     return source

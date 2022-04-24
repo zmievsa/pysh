@@ -42,6 +42,17 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "ideas"
+version = "0.0.37"
+description = "Easy creation of import hooks to test ideas."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+token-utils = "*"
+
+[[package]]
 name = "importlib-metadata"
 version = "4.11.3"
 description = "Read metadata from Python packages"
@@ -109,6 +120,14 @@ optional = false
 python-versions = "!=3.0,!=3.1,!=3.2,!=3.3,>=2.6"
 
 [[package]]
+name = "token-utils"
+version = "0.1.8"
+description = "Small utility to work with Python tokens"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -174,7 +193,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "91618bfda11fe3e564c4cd9eaea93abb5adf719bfaa8a1a693c8a5903426b491"
+content-hash = "bbe695f30f84bc0d7bd1ffd9af506fb1c47f803560556cecaa72c42fd0a16457"
 
 [metadata.files]
 black = [
@@ -210,6 +229,10 @@ colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
+ideas = [
+    {file = "ideas-0.0.37-py3-none-any.whl", hash = "sha256:c79817f7212f7cd65d27d7fe598af80a3c3da9f30b529d4cc77152ec6b4efb37"},
+    {file = "ideas-0.0.37.tar.gz", hash = "sha256:730807012bd999d200ae1caf69959a488289418842aa7b3cab6e4624d58ee615"},
+]
 importlib-metadata = [
     {file = "importlib_metadata-4.11.3-py3-none-any.whl", hash = "sha256:1208431ca90a8cca1a6b8af391bb53c1a2db74e5d1cef6ddced95d4b2062edc6"},
     {file = "importlib_metadata-4.11.3.tar.gz", hash = "sha256:ea4c597ebf37142f827b8f39299579e31685c31d3a438b59f469406afd0f2539"},
@@ -233,6 +256,10 @@ platformdirs = [
 shellingham = [
     {file = "shellingham-1.4.0-py2.py3-none-any.whl", hash = "sha256:536b67a0697f2e4af32ab176c00a50ac2899c5a05e0d8e2dadac8e58888283f9"},
     {file = "shellingham-1.4.0.tar.gz", hash = "sha256:4855c2458d6904829bd34c299f11fdeed7cfefbf8a2c522e4caea6cd76b3171e"},
+]
+token-utils = [
+    {file = "token-utils-0.1.8.tar.gz", hash = "sha256:7f4e2ff973822ce1e1829ba70e17d00b315a570c5be625b01a3f361933c2f86a"},
+    {file = "token_utils-0.1.8-py3-none-any.whl", hash = "sha256:8bdca11ae8aacab3e47dacbb21165c2d118167d2a0a59b93e61aa8af03f62481"},
 ]
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},

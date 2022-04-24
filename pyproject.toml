@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pysh-stub"
 packages = [{ include = "pysh" }]
-version = "1.0.0"
+version = "1.0.1"
 description = "A bunch of shortcuts to simplify scripting in python"
 authors = ["Stanislav Zmiev <szmiev2000@gmail.com>"]
 license = "MIT"
@@ -11,6 +11,7 @@ python = "^3.7"
 typer = { extras = ["all"], version = "^0.4.0" }
 tomlkit = "^0.10.0"
 typing-extensions = "^4.2.0"
+ideas = "^0.0.37"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"

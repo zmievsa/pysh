@@ -26,7 +26,7 @@ def sh(
     extra_env: T.Dict[str, str] = {},
     pipe_stdout=False,
     **kwargs,
-) -> subprocess.CompletedProcess[str]:
+) -> subprocess.CompletedProcess:
     global __last_bash_cmd_returncode__
     kwargs["env"] = dict(**(kwargs.get("env") or os.environ), **extra_env)
     if pipe_stdout:

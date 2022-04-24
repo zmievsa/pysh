@@ -11,12 +11,11 @@ from ideas import import_hook, main_hack
 
 import typer
 
-from .util import import_from_path
-
 from .token_transformers import transform_source
+from .util import __raise_exception__
 
 __version__ = "0.2.0"
-__all__ = ["P", "sh", "PIPE", "re", "typer", "sys", "os"]
+__all__ = ["P", "sh", "re", "typer", "sys", "os"]
 
 PIPE = subprocess.PIPE
 DEVNULL = subprocess.DEVNULL
@@ -67,14 +66,27 @@ def main(argv: T.Optional[T.List[str]] = None) -> None:
     globals_ = globals()
     for attr in __all__:
         setattr(builtins, attr, globals_[attr])
-    for index, arg in enumerate(argv):
-        setattr(builtins, f"a{index}", arg)
+    builtins.__raise_exception__ = __raise_exception__  # type: ignore
 
     add_hook()
     module_name = argv[0][: -len(".pysh")]
     main_hack.main_name = module_name
-    sys.path.insert(0, str(P(argv[0]).parent))
-    importlib.import_module(module_name)
+    module_path = P(argv[0]).resolve()
+    sys.path.insert(0, str(module_path.parent))
+    try:
+        importlib.import_module(module_name)
+    except Exception:
+        import traceback
+
+        exc = traceback.format_exc()
+        seeked_str = f'  File "{module_path}"'
+        if seeked_str in exc:
+
+            exc = "Traceback (most recent call last):\n" + exc[exc.index(f'  File "{module_path}"') :]
+            sys.stderr.write(exc)
+            sys.exit(1)
+        else:
+            raise
 
 
 if __name__ == "__main__":

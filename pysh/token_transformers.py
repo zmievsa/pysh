@@ -2,25 +2,26 @@ from collections import namedtuple
 from io import StringIO
 import re
 import tokenize
-from typing import Generator, List, Union
+from typing import Any, Generator, List, Union
 
 try:
     from rich import print as pprint
 except ImportError:
-    ...
+    pass
 
-    def pprint(*a, **kw):
-        pass
+
+# def pprint(*a, **kw):
+#     pass
 
 
 Token = namedtuple("Token", "string type")
-MAGICAL_COMMANDS = {"cd"}
+MAGICAL_COMMANDS = {"cd": "os.chdir(f'{argv}')"}
 RE_SHELLVAR = re.compile(r"(?<!\\)\$[\w@#]+")
 
 
 def convert_to_shell_var(varname: str) -> str:
     if varname.isdigit():
-        return f"{{sys.argv[{varname}]}}"
+        return f"{{sys.argv[{varname}] if len(sys.argv) > int({varname}) else __raise_exception__(IndexError('Command line argument ${varname} was not passed'))}}"
     elif varname == "#":
         return "{len(sys.argv) - 1}"
     elif varname == "@":
@@ -45,41 +46,45 @@ def modify_tokens(tokens: List[tokenize.TokenInfo]) -> Generator[Union[tokenize.
     piped_bash_line_started = False
     cmd = None
     for i, token in enumerate(tokens):
-        if token.string == "!":
-            pprint("START", token)
-            if piped_bash_line_started:
-                raise SyntaxError(f'Three "!" in one line are not supported. Problematic line: {token.line}')
-            elif bash_line_started:
-                piped_bash_line_started = True
-            else:
-                bash_line_started = True
-        elif token.type == tokenize.NEWLINE and bash_line_started:
-            prev_token = tokens[i - 1]
-            argv = prev_token.line[prev_token.line.rindex("!" + cmd) + len(cmd) + 1 :]
-            argv = argv.replace('"', '\\"').replace("{ }", "{{}}").rstrip("\n")
-            for var in set(RE_SHELLVAR.findall(argv)):
-                argv = argv.replace(var, convert_to_shell_var(var[1:]))
-            if cmd in MAGICAL_COMMANDS:
-                yield Token(tokenize.NAME, convert_to_magical_command(cmd, argv))
-            else:
-                # There's a space between braces because of " ".join
-                yield Token(tokenize.NAME, f'''sh(f"""{cmd} {argv}""", pipe_stdout={piped_bash_line_started}).stdout''')
-            bash_line_started = piped_bash_line_started = False
-            cmd = None
-            yield token
-        elif bash_line_started:
-            if cmd is None:
+        if bash_line_started:
+            if token.type == tokenize.NEWLINE:
+                if cmd is None:
+                    raise SyntaxError(f"Unknown syntax error on line: {token.line}")
+                prev_token = tokens[i - 1]
+                argv = prev_token.line[prev_token.line.rindex("!" + cmd) + len(cmd) + 1 :]
+                argv = argv.replace('"', '\\"').rstrip("\n")
+                for var in set(RE_SHELLVAR.findall(argv)):
+                    argv = argv.replace(var, convert_to_shell_var(var[1:]))
+                if cmd in MAGICAL_COMMANDS:
+                    yield Token(tokenize.NAME, MAGICAL_COMMANDS[cmd].format(cmd=cmd, argv=argv))
+                else:
+                    yield Token(
+                        tokenize.NAME,
+                        f'''sh(f"""{cmd} {argv}""", pipe_stdout={piped_bash_line_started}).stdout''',
+                    )
+                bash_line_started = piped_bash_line_started = False
+                cmd = None
+                yield token
+            elif token.string == "!":
+                if piped_bash_line_started:
+                    raise SyntaxError(f'Three "!" in one line are not supported. Problematic line: {token.line}')
+                else:
+                    pprint("PIPE", token)
+                    piped_bash_line_started = True
+            elif cmd is None:
                 pprint("CMD", token)
                 cmd = token.string
             else:
                 pprint("ADD", token)
+        elif token.string == "!":
+            pprint("START", token)
+            bash_line_started = True
         else:
             pprint("STANDARD", token)
             yield token
-    yield tokens[-1]
 
 
-def transform_source(source, **kwargs):
+def transform_source(source: str, **kwargs: Any) -> str:
     tokens = list(tokenize.generate_tokens(StringIO(source).readline))
     source = tokenize.untokenize(modify_tokens(tokens))
     pprint(source)

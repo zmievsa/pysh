@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import types
 import typing as T
+from typing_extensions import Never
 
 
 def import_from_path(
@@ -50,3 +51,7 @@ def import_from_path(
         raise
 
     return module
+
+
+def __raise_exception__(exc: BaseException) -> Never:
+    raise exc

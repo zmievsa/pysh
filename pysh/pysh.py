@@ -51,24 +51,26 @@ def add_hook(verbose_finder=False):
 def main(argv: T.Optional[T.List[str]] = None) -> None:
     if argv is None:
         argv = sys.argv
-    if len(argv) < 2:
-        import code
-
-        code.interact(local={k: v for k, v in globals().items() if k in __all__})
-        exit(0)
-    elif not P(argv[1]).is_file():
-        print("Expecting a path to the script", file=sys.stderr)
-        exit(1)
     import builtins
-
-    argv[0] = argv.pop(1)
 
     globals_ = globals()
     for attr in __all__:
         setattr(builtins, attr, globals_[attr])
     builtins.__raise_exception__ = __raise_exception__  # type: ignore
 
+    if len(argv) < 2:
+        from ideas import console
+
+        console.configure(transform_source=transform_source)
+        console.start(prompt=">>> ", banner=f"Pysh Console [Python version: {sys.version}]")
+        exit(0)
+    elif not P(argv[1]).is_file():
+        print("Expecting a path to the script", file=sys.stderr)
+        exit(1)
+
     add_hook()
+    argv[0] = argv.pop(1)
+
     module_name = argv[0][: -len(".pysh")]
     main_hack.main_name = module_name
     module_path = P(argv[0]).resolve()

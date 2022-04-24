@@ -10,8 +10,8 @@ except ImportError:
     pass
 
 
-# def pprint(*a, **kw):
-#     pass
+def pprint(*a, **kw):
+    pass
 
 
 Token = namedtuple("Token", "string type")
@@ -56,7 +56,7 @@ def modify_tokens(tokens: List[tokenize.TokenInfo]) -> Generator[Union[tokenize.
                 for var in set(RE_SHELLVAR.findall(argv)):
                     argv = argv.replace(var, convert_to_shell_var(var[1:]))
                 if cmd in MAGICAL_COMMANDS:
-                    yield Token(tokenize.NAME, MAGICAL_COMMANDS[cmd].format(cmd=cmd, argv=argv))
+                    yield Token(tokenize.NAME, MAGICAL_COMMANDS[cmd].format(cmd=cmd, argv=argv.strip()))
                 else:
                     yield Token(
                         tokenize.NAME,

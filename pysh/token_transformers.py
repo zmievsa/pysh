@@ -2,7 +2,8 @@ from collections import deque, namedtuple
 from io import StringIO
 import tokenize
 from typing import Generator, List, Union
-from rich import print
+
+# from rich import print
 
 Token = namedtuple("Token", "string type")
 MAGICAL_COMMANDS = {"cd"}
@@ -37,6 +38,7 @@ def modify_tokens(tokens: List[tokenize.TokenInfo]) -> Generator[Union[tokenize.
     cmd_tokens = deque()
     for token in tokens:
         if convert_next_token_to_shell_cmd:
+            print("CONVERT", token)
             cmd_tokens.append(convert_to_shell_var(token.string))
             convert_next_token_to_shell_cmd = False
         elif token.string == "!":
@@ -48,10 +50,12 @@ def modify_tokens(tokens: List[tokenize.TokenInfo]) -> Generator[Union[tokenize.
             else:
                 bash_line_started = True
         elif token.type == tokenize.NEWLINE and bash_line_started:
+            # print("END", token)
             if cmd_tokens[0] in MAGICAL_COMMANDS:
                 yield Token(tokenize.NAME, convert_to_magical_command(list(cmd_tokens)))
             else:
-                cmd = " ".join(cmd_tokens).replace('"', '\\"')
+                # There's a space between braces because of " ".join
+                cmd = " ".join(cmd_tokens).replace('"', '\\"').replace("{ }", "{{}}")
                 yield Token(tokenize.NAME, f'''sh(f"""{cmd}""", pipe_stdout={piped_bash_line_started}).stdout''')
             cmd_tokens.clear()
             bash_line_started = piped_bash_line_started = False

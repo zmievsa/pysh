@@ -1,10 +1,20 @@
 [tool.poetry]
 name = "pysh-stub"
 packages = [{ include = "pysh" }]
-version = "1.0.1"
+version = "1.0.2"
 description = "A bunch of shortcuts to simplify scripting in python"
 authors = ["Stanislav Zmiev <szmiev2000@gmail.com>"]
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/Ovsyanka83/pysh"
+keywords = ["python", "shell", "bash", "script", "scripting", "pysh"]
+classifiers = [
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Shells",
+    "Topic :: Utilities",
+]
+
 
 [tool.poetry.dependencies]
 python = "^3.7"

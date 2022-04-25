@@ -37,12 +37,11 @@ def sh(
     return result
 
 
-def add_hook(verbose_finder=False):
+def add_hook():
     """Creates and automatically adds the import hook in sys.meta_path"""
     hook = import_hook.create_hook(
         hook_name=__name__,
         transform_source=transform_source,
-        verbose_finder=verbose_finder,
         extensions=[".pysh"],
     )
     return hook

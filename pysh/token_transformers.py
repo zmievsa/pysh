@@ -2,7 +2,7 @@ import re
 import tokenize
 from collections import namedtuple
 from io import StringIO
-from typing import Any, Generator, List, Optional, Union
+from typing import Any, Generator, List, Optional, Tuple, Union
 
 try:
     from rich import print as pprint
@@ -14,12 +14,37 @@ def pprint(*a, **kw):
     pass
 
 
-Token = namedtuple("Token", "type string")
-SIMPLE_MAGICAL_COMMANDS = {
-    "cd": 'os.chdir(f"{argv}")',
-    "export": 'os.environ.update(f"{argv}")',
-    "unset": 'os.environ.pop(f"{argv}")',
-}
+"""
+char *special_builtins[] =
+{
+  ":", ".", "source", "break", "continue", "eval", "exec", "exit",
+  "export", "readonly", "return", "set", "shift", "times", "trap", "unset",
+  (char *)NULL
+};
+
+/* The builtin commands that take assignment statements as arguments. */
+char *assignment_builtins[] =
+{
+  "alias", "declare", "export", "local", "readonly", "typeset",
+  (char *)NULL
+};
+
+char *localvar_builtins[] =
+{
+  "declare", "local", "typeset", (char *)NULL
+};
+
+/* The builtin commands that are special to the POSIX search order. */
+char *posix_builtins[] =
+{
+  "alias", "bg", "cd", "command", "false", "fc", "fg", "getopts", "jobs",
+  "kill", "newgrp", "pwd", "read", "true", "umask", "unalias", "wait",
+  (char *)NULL
+};
+"""
+
+
+SIMPLE_MAGICAL_COMMANDS = {"cd": 'os.chdir(f"{argv}")'}
 COMPLEX_MAGICAL_COMMANDS = {"set", "exit"}
 RE_SHELLVAR = re.compile(r"(?<!\\)\$[\w@#]+")
 
@@ -36,18 +61,15 @@ def convert_to_shell_var(varname: str) -> str:
     elif varname == "$":
         return "{os.getpid()}"
     else:
-        return f"{{os.environ['{varname}'] if '{varname}' in os.environ else {varname}}}"
+        return f"{{os.environ['{varname}']}}"
 
 
 def convert_to_magical_command(cmd: str, argv: str) -> Optional[str]:
     if cmd in SIMPLE_MAGICAL_COMMANDS:
         return SIMPLE_MAGICAL_COMMANDS[cmd].format(cmd=cmd, argv=argv)
     elif cmd in COMPLEX_MAGICAL_COMMANDS:
-        if cmd == "set":
-            if argv.startswith(("+e", "-e")):
-                return f'__pysh_check_returncodes__.set({argv.startswith("-e")})'
-            else:
-                return f'os.environ.update(f"{argv}")'
+        if cmd == "set" and argv.startswith(("+e", "-e")):
+            return f'__pysh_check_returncodes__.set({argv.startswith("-e")})'
         elif cmd == "exit":
             if not argv:
                 argv = "0"
@@ -58,7 +80,7 @@ def convert_to_magical_command(cmd: str, argv: str) -> Optional[str]:
             return f"sys.exit({int(argv)})"
 
 
-def modify_tokens(tokens: List[tokenize.TokenInfo]) -> Generator[Union[tokenize.TokenInfo, Token], None, None]:
+def modify_tokens(tokens: List[tokenize.TokenInfo]) -> Generator[Tuple[int, str], None, None]:
     bash_line_started = False
     piped_bash_line_started = False
     cmd = None
@@ -75,12 +97,10 @@ def modify_tokens(tokens: List[tokenize.TokenInfo]) -> Generator[Union[tokenize.
                     argv = argv.replace(var, convert_to_shell_var(var[1:]))
                 magical_command = convert_to_magical_command(cmd, argv.strip())
                 if magical_command is not None:
-                    yield Token(tokenize.NAME, magical_command)
+                    yield tokenize.NAME, magical_command
                 else:
-                    yield Token(
-                        tokenize.NAME,
-                        f'''sh(f"""{cmd} {argv}""", pipe_stdout={piped_bash_line_started}).stdout''',
-                    )
+                    command = f'''sh(f"""{cmd} {argv}""", pipe_stdout={piped_bash_line_started}).stdout'''
+                    yield tokenize.NAME, command
                 bash_line_started = piped_bash_line_started = False
                 cmd = None
                 yield token[:2]

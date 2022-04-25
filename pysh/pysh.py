@@ -68,6 +68,7 @@ def main(argv: T.Optional[T.List[str]] = None) -> None:
     for attr in __all__:
         setattr(builtins, attr, globals_[attr])
     builtins.__raise_exception__ = __raise_exception__  # type: ignore
+    builtins.__pysh_check_returncodes__ = __pysh_check_returncodes__  # type: ignore
 
     if args.script is None:
         from ideas import console

@@ -42,18 +42,18 @@ I also import typer as I consider it to be the most concise way to write any com
 If you wish to customize how you call bash subprocesses, you can use the builtin "sh" function. It supports all the same arguments as subprocess.run but has text=True and shell=True by default.
 
 ## Magical Commands
-We use subprocess.run to run bash commands but that has a few quirks. If you modify the process info in any way within the subprocess (cd, set, unset, etc), this information will not change for the currently running process. Hence we have a few magical commands that do not create a subprocess but instead use equivalent python constructs.
+We use subprocess.run to run bash commands but that has a few quirks. If you modify the process info in any way within the subprocess (cd, set, unset, etc), this information will not change for the currently running process. Hence we have a few magical commands that do not create a subprocess but instead use roughly equivalent python constructs.
 
 Here's a list of all the magical commands and the approximate conversions we apply to them:
-| Original        | Converted                             |
-| -----------     | -----------                           |
-| !cd arg         | os.chdir(arg)                         |
-| !set var=val    | os.environ[var] = val                 |
-| !export var=val | os.environ[var] = val                 |
-| !unset var      | del os.environ[var]                   |
-| !set -e         | __pysh_check_returncodes__.set(True)  |
-| !set +e         | __pysh_check_returncodes__.set(False) |
-| !exit arg       | sys.exit(int(arg))                    |
+| Original        | Converted                                 |
+| -----------     | -----------                               |
+| !cd arg         | os.chdir(arg)                             |
+| !set var=val    | os.environ[var] = val                     |
+| !export var=val | os.environ[var] = val                     |
+| !unset var      | del os.environ[var]                       |
+| !set -e         | \_\_pysh_check_returncodes\_\_.set(True)  |
+| !set +e         | \_\_pysh_check_returncodes\_\_.set(False) |
+| !exit arg       | sys.exit(int(arg))                        |
 ## Notes on syntax
 * Each bash call is parsed until the end of the line so they are closer to statements than expressions. Hence the following is not possible:
 ```bash

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pysh-stub"
 packages = [{ include = "pysh" }]
-version = "1.1.0"
+version = "1.1.2"
 description = "A bunch of shortcuts and weird magic to simplify scripting in python"
 authors = ["Stanislav Zmiev <szmiev2000@gmail.com>"]
 license = "MIT"

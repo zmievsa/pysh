@@ -1,9 +1,19 @@
 import importlib.util
-from pathlib import Path
 import sys
 import types
 import typing as T
+from dataclasses import dataclass
+from pathlib import Path
+
 from typing_extensions import Never
+
+
+@dataclass
+class MutableBool:
+    value: bool
+
+    def set(self, value: bool) -> None:
+        self.value = value
 
 
 def import_from_path(

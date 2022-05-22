@@ -15,7 +15,7 @@ from ideas import import_hook, main_hack
 from .token_transformers import transform_source
 from .util import MutableBool, __raise_exception__
 
-__version__ = "0.2.0"
+__version__ = "1.1.3"
 __all__ = ["P", "sh", "re", "typer", "sys", "os", "__pysh_check_returncodes__"]
 
 PIPE = subprocess.PIPE
@@ -92,7 +92,6 @@ def main(argv: T.Optional[T.List[str]] = None) -> None:
                 file = output
         file.write_text(new_source)
     else:
-        print(args.script)
         add_hook()
         if argv is sys.argv:
             argv[0] = argv.pop(1)

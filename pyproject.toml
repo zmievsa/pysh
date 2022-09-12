@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pysh"
-version = "2.0.0"
+version = "2.0.1"
 description = "A library of small functions that simplify scripting in python"
 authors = ["Stanislav Zmiev <szmiev2000@gmail.com>"]
 license = "MIT"

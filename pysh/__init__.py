@@ -3,6 +3,9 @@ import os
 from pathlib import Path
 import subprocess
 from typing import Generator, Union, overload
+import importlib.metadata
+
+__version__ = importlib.metadata.version("pysh")
 
 
 @overload

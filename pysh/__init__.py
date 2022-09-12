@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import subprocess
@@ -10,11 +11,13 @@ def sh(*argv, capture: None = None, cwd: Union[str, Path] = ".", **kwargs) -> bo
 
 
 @overload
-def sh(*argv, capture: bool = True, cwd: Union[str, Path] = ".", **kwargs) -> "subprocess.CompletedProcess[str]":
+def sh(*argv, capture: bool = True, cwd: Union[str, Path] = ".", **kwargs) -> "CompletedProcessWrapper":
     ...
 
 
-def sh(*argv, capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **kwargs):
+def sh(
+    *argv, capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **kwargs
+) -> Union[bool, "CompletedProcessWrapper"]:
     kwargs["stdin"] = subprocess.PIPE
     kwargs["shell"] = True
     kwargs["text"] = True
@@ -30,6 +33,7 @@ def sh(*argv, capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **
     return CompletedProcessWrapper(result)
 
 
+@contextmanager
 def cd(path: Union[str, Path]) -> Generator[Path, None, None]:
     if isinstance(path, str):
         path = Path(path)

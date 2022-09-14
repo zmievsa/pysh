@@ -50,13 +50,14 @@ def cd(path: Union[str, Path]) -> Generator[Path, None, None]:
 
 
 @contextmanager
-def env(key: str, value: str) -> Generator[str, None, None]:
-    old_value = os.environ.get(key)
-    os.environ[key] = value
+def env(**kwargs: str) -> Generator[None, None, None]:
+    old_values = {key: os.environ.get(key) for key in kwargs}
+    os.environ.update(kwargs)
 
-    yield value
+    yield
 
-    if old_value is not None:
-        os.environ[key] = old_value
-    else:
-        del os.environ[key]
+    for key, value in old_values.items():
+        if value is not None:
+            os.environ[key] = value
+        else:
+            del os.environ[key]

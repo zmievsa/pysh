@@ -3,7 +3,7 @@ import os
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, Union
+from typing import Any, Generator, Union
 
 __version__ = importlib.metadata.version("pysh")
 
@@ -23,7 +23,9 @@ class CompletedProcessWrapper:
         return self.returncode == 0  # type: ignore
 
 
-def sh(*argv, capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **kwargs) -> subprocess.CompletedProcess:
+def sh(
+    *argv: str, capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **kwargs: Any
+) -> "subprocess.CompletedProcess[str]":
     kwargs["stdin"] = subprocess.PIPE
     kwargs["shell"] = True
     kwargs["text"] = True

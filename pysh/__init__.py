@@ -1,9 +1,11 @@
 import importlib.metadata
 import os
+import shutil
 import subprocess
+import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, Union
+from typing import Any, Generator, Optional, Union
 
 __version__ = importlib.metadata.version("pysh")
 
@@ -63,3 +65,16 @@ def env(**kwargs: str) -> Generator[None, None, None]:
             os.environ[key] = value
         else:
             del os.environ[key]
+
+
+def which(cmd: str) -> Optional[str]:
+    """Tells you whether a program/function/alias is available
+
+    Doesn't necessarily return a path because it uses 'type' in unix
+    """
+    if sys.platform.startswith("win32"):
+        return shutil.which(cmd)
+    else:
+        response = sh(f"type {cmd}", capture=True)
+        if response:
+            return response.stdout

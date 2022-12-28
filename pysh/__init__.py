@@ -1,4 +1,3 @@
-import importlib.metadata
 import os
 import shutil
 import subprocess
@@ -7,11 +6,23 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Generator, Optional, Union
 
-__version__ = importlib.metadata.version("pysh")
+try:
+    import importlib.metadata
+
+    __version__ = importlib.metadata.version("pysh")
+except ImportError:
+    import pkg_resources
+
+    __version__ = pkg_resources.get_distribution("pysh").version
 
 
 class CompletedProcessWrapper:
-    def __init__(self, completed_process: subprocess.CompletedProcess):
+    stdout: str
+    stderr: str
+    returncode: int
+    args: Any
+
+    def __init__(self, completed_process: "subprocess.CompletedProcess[str]"):
         self.wrapped = completed_process
 
     def __getattribute__(self, __name: str):
@@ -21,13 +32,13 @@ class CompletedProcessWrapper:
         else:
             return getattr(wrapped, __name)
 
-    def __bool__(self):
-        return self.returncode == 0  # type: ignore
+    def __bool__(self) -> bool:
+        return self.returncode == 0
 
 
 def sh(
     *argv: str, capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **kwargs: Any
-) -> "subprocess.CompletedProcess[str]":
+) -> "CompletedProcessWrapper":
     kwargs["stdin"] = subprocess.PIPE
     kwargs["shell"] = True
     kwargs["text"] = True
@@ -40,7 +51,7 @@ def sh(
         kwargs["env"] = os.environ
 
     result = subprocess.run(argv, cwd=cwd, **kwargs)
-    return CompletedProcessWrapper(result)  # type: ignore
+    return CompletedProcessWrapper(result)
 
 
 @contextmanager

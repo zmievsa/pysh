@@ -4,7 +4,7 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, Optional, Union
+from typing import Any, Generator, Iterable, Optional, Union
 
 try:
     import importlib.metadata
@@ -14,6 +14,8 @@ except ImportError:
     import pkg_resources
 
     __version__ = pkg_resources.get_distribution("pysh").version
+
+__all__ = ["sh", "cd", "env", "which"]
 
 
 class CompletedProcessWrapper:
@@ -37,8 +39,15 @@ class CompletedProcessWrapper:
 
 
 def sh(
-    *argv: str, capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **kwargs: Any
+    *argv: Union[str, Iterable[str]], capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **kwargs: Any
 ) -> "CompletedProcessWrapper":
+    flattened_argv = []
+    for arg in argv:
+        if isinstance(arg, str):
+            flattened_argv.append(arg)
+        else:
+            flattened_argv.extend(arg)
+
     kwargs["stdin"] = subprocess.PIPE
     kwargs["shell"] = True
     kwargs["text"] = True
@@ -50,7 +59,7 @@ def sh(
     else:
         kwargs["env"] = os.environ
 
-    result = subprocess.run(argv, cwd=cwd, **kwargs)
+    result = subprocess.run(flattened_argv, cwd=cwd, **kwargs)
     return CompletedProcessWrapper(result)
 
 

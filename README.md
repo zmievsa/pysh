@@ -9,25 +9,44 @@ pip install pysh
 ```
 
 ## Usage
+### sh
+Run a shell command and display the output:
 
 ```python
-from pysh import sh, cd, env, which
+sh("git status")
+```
+Capture the output of a shell command:
 
-sh("git status") # will display the output of git status
-res = sh("git status", capture=True) # will capture stdout and stderr of git status
-print(res.stdout) # will print stdout of git status
+```python
+res = sh("git status", capture=True)
+print(res.stdout)
+```
+### cd
+Change the current working directory:
 
-
-cd("path/to/dir") # will change the current working directory to path/to/dir
-with cd("path/to/dir"): # will change the current working directory to path/to/dir and then change it back to the original directory
+```python
+cd("path/to/dir")
+```
+Change the current working directory temporarily:
+```python
+with cd("path/to/dir"):
     sh("git status")
+```
+### env
+Set an environment variable:
 
+```python
+env(var="value")
+```
+Set an environment variable temporarily:
 
-env(var="value") # will set the environment variable var to value
-with env(PGPASSWORD="MyPassword"): # will set the environment variable PGPASSWORD to MyPassword and then set it back to the original value
-    sh("createdb -U postgres -h localhost -p 5432 -O postgres mydb")
+```python
+with env(PGPASSWORD="MyPassword", PGUSER="postgres"):
+    sh("createdb -h localhost -p 5432 -O postgres mydb")
+```
+### which
+Get the path to an executable or get the script:
 
-
-which("git") # will return the path to the git executable or None if git is not installed
-
+```python
+git_is_installed = which("git")
 ```

@@ -4,7 +4,7 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, Iterable, Optional, Union
+from typing import Any, Iterable, Optional, Union
 
 try:
     import importlib.metadata
@@ -40,7 +40,16 @@ class CompletedProcessWrapper:
 
 def sh(
     *argv: Union[str, Iterable[str]], capture: Union[bool, None] = None, cwd: Union[str, Path] = ".", **kwargs: Any
-) -> "CompletedProcessWrapper":
+) -> CompletedProcessWrapper:
+    """Run a shell command and display the output:
+
+    >>> sh("git status")
+
+    Capture the output of a shell command:
+
+    >>> res = sh("git status", capture=True)
+    >>> print(res.stdout)
+    """
     flattened_argv = []
     for arg in argv:
         if isinstance(arg, str):
@@ -49,8 +58,8 @@ def sh(
             flattened_argv.extend(arg)
 
     kwargs["stdin"] = subprocess.PIPE
-    kwargs["shell"] = True
-    kwargs["text"] = True
+    kwargs.pop("shell", None)
+    kwargs.pop("text", None)
     if capture:
         kwargs["stdout"] = subprocess.PIPE
         kwargs["stderr"] = subprocess.PIPE
@@ -59,42 +68,93 @@ def sh(
     else:
         kwargs["env"] = os.environ
 
-    result = subprocess.run(flattened_argv, cwd=cwd, **kwargs)
+    result = subprocess.run(flattened_argv, cwd=cwd, shell=True, text=True, **kwargs)
     return CompletedProcessWrapper(result)
 
 
-@contextmanager
-def cd(path: Union[str, Path]) -> Generator[Path, None, None]:
-    if isinstance(path, str):
-        path = Path(path)
-    cwd = Path.cwd().absolute()
-    os.chdir(path)
-    yield path
-    os.chdir(cwd)
+class cd:
+    """Changes the current working directory
+
+    >>> cd("/tmp")
+    >>> Path.cwd()
+    PosixPath('/tmp')
+
+    >>> with cd("/usr"):
+    ...     Path.cwd()
+    ...
+    PosixPath('/usr')
+    >>> Path.cwd()
+    PosixPath('/tmp')
+
+    """
+
+    def __init__(self, path: Union[str, Path]) -> None:
+        if isinstance(path, str):
+            path = Path(path)
+        self.path = path
+        self.old_cwd = Path.cwd().resolve()
+        os.chdir(path)
+
+    def __enter__(self) -> Path:
+        return self.path
+
+    def __exit__(self, *args) -> None:
+        os.chdir(self.old_cwd)
 
 
-@contextmanager
-def env(**kwargs: str) -> Generator[None, None, None]:
-    old_values = {key: os.environ.get(key) for key in kwargs}
-    os.environ.update(kwargs)
+class env:
+    """Sets environment variables for the duration of the context manager
 
-    yield
+    >>> env(var="value")
+    >>> os.environ["var"]
+    'value'
 
-    for key, value in old_values.items():
-        if value is not None:
-            os.environ[key] = value
-        else:
-            del os.environ[key]
+    >>> with env(var2="value2", var3="value3"):
+    ...     os.environ["var2"], os.environ["var3"]
+    ...
+    ('value2', 'value3')
+
+    """
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.old_environ = os.environ.copy()
+        os.environ.update(self.kwargs)
+
+    def __enter__(self) -> "os._Environ[str]":
+        return os.environ
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for key in self.kwargs:
+            in_old = key in self.old_environ
+            in_new = key in os.environ
+            new_eq_kwargs = os.environ.get(key) == self.kwargs.get(key)
+
+            if not in_old and in_new and new_eq_kwargs:
+                del os.environ[key]
+            elif in_old and in_new and new_eq_kwargs:
+                os.environ[key] = self.old_environ[key]
 
 
 def which(cmd: str) -> Optional[str]:
-    """Tells you whether a program/function/alias is available
+    """Checks whether an executable/script/builtin is available
 
     Doesn't necessarily return a path because it uses 'type' in unix
+
+    >>> which("git")
+    '/usr/bin/git'
+
+    >>> which("source")
+    'source is a special shell builtin'
+
+    >>> which("doesntexist")
+    >>>
     """
-    if sys.platform.startswith("win32"):
-        return shutil.which(cmd)
+    result = shutil.which(cmd)
+
+    if result is not None or sys.platform.startswith("win32"):
+        return result
     else:
         response = sh(f"type {cmd}", capture=True)
         if response:
-            return response.stdout
+            return response.stdout.strip()

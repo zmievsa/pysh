@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pysh"
-version = "3.1.2"
+version = "3.3.0"
 description = "A library of small functions that simplify scripting in python"
 authors = ["Stanislav Zmiev <szmiev2000@gmail.com>"]
 license = "MIT"
@@ -18,7 +18,8 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.7"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
 black = "^22.1.0"
 isort = "^5.10.1"
 

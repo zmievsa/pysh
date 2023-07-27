@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "pysh"
-version = "3.3.0"
+version = "3.3.1"
 description = "A library of small functions that simplify scripting in python"
-authors = ["Stanislav Zmiev <szmiev2000@gmail.com>"]
+authors = ["Stanislav Zmiev <zmievsa@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/Ovsyanka83/pysh"
